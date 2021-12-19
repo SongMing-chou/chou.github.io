@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/112.png">
+  <link rel="icon" href="/img/112.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="只记录关键步骤与遇到的问题提醒自己，更多细节自行上csdn查找（虽然很多都没用且重复：），但是大致流程是没错的）；">
+  <meta name="author" content="小M">
+  <meta name="keywords" content="">
+  <meta name="description" content="只记录关键步骤与遇到的问题提醒自己，更多细节自行上csdn查找（虽然很多都没用且重复：），但是大致流程是没错的）；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="xenomai+ethercat编译">
+<meta property="og:url" content="http://example.com/2021/09/14/xenomai+ethercat/index.html">
+<meta property="og:site_name" content="Chou">
+<meta property="og:description" content="只记录关键步骤与遇到的问题提醒自己，更多细节自行上csdn查找（虽然很多都没用且重复：），但是大致流程是没错的）；">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/medias/914.2.jpg">
+<meta property="og:image" content="http://example.com/medias/914.1.png">
+<meta property="og:image" content="http://example.com/medias/914.0.png">
+<meta property="og:image" content="http://example.com/medias/914.png">
+<meta property="og:image" content="http://example.com/medias/914.3.jpg">
+<meta property="article:published_time" content="2021-09-14T07:37:02.000Z">
+<meta property="article:modified_time" content="2021-12-08T11:44:41.667Z">
+<meta property="article:author" content="chou">
+<meta property="article:tag" content="实验室">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/medias/914.2.jpg">
+  
+  <title>xenomai+ethercat编译 - Chou</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>chou</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/55.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="xenomai+ethercat编译">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-14 15:37" pubdate>
+        September 14, 2021 pm
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">xenomai+ethercat编译</h1>
+            
+            <div class="markdown-body">
+              <p>只记录关键步骤与遇到的问题提醒自己，更多细节自行上csdn查找（虽然很多都没用且重复：），但是大致流程是没错的）；</p>
+<span id="more"></span>
+<h2 id="前期准备"><a href="#前期准备" class="headerlink" title="前期准备"></a>前期准备</h2><p>我是在我自己电脑安装的unbutu上编译的，<br>linux内核版本是4.19.152，xenomai为3.1，ipipe补丁在xenomai官网下就可。ethercat版本为1.5.2版本，</p>
+<h2 id="编译linux内核"><a href="#编译linux内核" class="headerlink" title="编译linux内核"></a>编译linux内核</h2><h3 id="安装工具"><a href="#安装工具" class="headerlink" title="安装工具"></a>安装工具</h3><p>除列出来的以外，整个过程中会提示你缺少什么工具，把他装上就可以了。<br>sudo apt-get install gcc<br>sudo apt-get install libncurses-dev<br>sudo apt-get install flex<br>sudo apt-get install bison<br>sudo apt-get install openssl-dev<br>sudo apt-get install dkms<br>sudo apt-get install libelf-dev<br>sudo apt-get install libudev-dev<br>sudo apt-get install libpci-dev<br>sudo apt-get install libiberty-dev<br>sudo apt-get install build-dep</p>
+<h3 id="给内核打ipipe补丁"><a href="#给内核打ipipe补丁" class="headerlink" title="给内核打ipipe补丁"></a>给内核打ipipe补丁</h3><p>进入解压的linux源码目录，执行<br>sudo path -p1 &lt; ipipe补丁路径+补丁名称</p>
+<h3 id="给内核打cobalt补丁"><a href="#给内核打cobalt补丁" class="headerlink" title="给内核打cobalt补丁"></a>给内核打cobalt补丁</h3><p>这个补丁需要自己生成，进入解压的xenomai源码目录，进入scripts目录，使用脚本prepare-kernel.sh对linux源码打cobalt补丁<br>sudo ./prepare-kernel.sh –linux=linux源码路径 –arch=x86_64 –outpatch=补丁生成目录+名称<br>补丁生成目录最好在linux源码的父目录：)，<br>回到linux源码目录下，执行<br>sudo path -p1&lt; cobalt补丁路径及补丁名称</p>
+<h3 id="配置内核"><a href="#配置内核" class="headerlink" title="配置内核"></a>配置内核</h3><p>先从自己linux内核中复制一个配置文件过来（.config文件）在不熟悉内核各种选项情况下能帮过滤一些不知道怎么选的选项，其实也就是能帮你减少编译时间<br>当然你也可以全部选上，睡个午觉喝个下午茶再来看看什么时候才能编译完成。<br>在linux内核源码目录下执行<br>cp /boot/config-$(uname -r) .config<br>执行make menuconfig</p>
+<p>先给自己的内核起个名字<br>在localversion选项填入</p>
+<p>配置设置如下，按照顺序，有些修改前提是相关的。</p>
+<figure class="highlight bash"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs bash">General setup —&gt;<br>1.Preemption Model (Preemptible Kernel (Low-Latency Desktop)) —&gt;<br>(X) Low-Latency Desktop<br>2.Local version - append to kernel release: -xenomai-3.1<br>3.Timers subsystem–&gt;<br>High Resolution Timer Support (Enable)<br><br>Processor <span class="hljs-built_in">type</span> and features —&gt;<br>1.Processor family (Core 2/newer Xeon) —&gt;<br>(X)Generic-x86-64 //(<span class="hljs-keyword">if</span> “cat /proc/cpuinfo | grep family” returns 6, <span class="hljs-built_in">set</span> as Generic otherwise)<br>2.[*] Multi-core scheduler support<br>3.[ ] CPU core priorities scheduler support<br>4.Enable maximum number of SMP processors and NUMA nodes (Disable)<br><br>Power management and ACPI options —&gt;<br>1.CPU Frequency scaling —&gt;<br>[ ] CPU Frequency scaling<br>2.[*] ACPI (Advanced Configuration and Power Interface) Support —&gt;<br>&lt; &gt; Processor<br>3. CPU Idle —&gt;<br>[ ] CPU idle PM support<br>Memory power savings --&gt;<br>Intel chipset idle memory power saving driver (Disable)<br>Run-time PM core functionality (Disable)<br><br>Memory Management options —&gt;<br>1.[ ] Contiguous Memory Allocator<br>2.[ ] Transparent Hugepage Support<br>3.[ ] Allow <span class="hljs-keyword">for</span> memory compaction<br>4.[ ] Page migration<br><br>Device Drivers<br>1.Microsoft Hyper-V guest support —&gt;<br>&lt; &gt; Microsoft Hyper-V client drivers<br>2.Staging drivers–&gt;<br>Unisys SPAR driver support(Disable)<br><br>Xenomai/cobalt<br>1.Sizes and static limits–&gt;<br>Number of registry slots (512 --&gt; 4096)<br>Size of system heap (Kb) (512 --&gt; 4096)<br>Size of private heap (Kb) (64 --&gt; 256)<br>Size of shared heap (Kb) (64 --&gt; 256)<br>Maximum number of POSIX timers per process (128 --&gt; 512)<br>2.Drivers --&gt;<br>RTnet --&gt;<br>RTnet, TCP/IP socket interface (Enable) --&gt;<br>Drivers–&gt;<br>New intel® PRO/1000 PCIe (Enable)<br>Realtek 8169 (Enable)<br>Loopback (Enable)<br>Add-Ons --&gt;<br>Real-Time Capturing Support (Enable)<br><br>    Real-time sub-system<br>    –&gt; Xenomai (Enable)<br>    –&gt; Nucleus (Enable)<br>    –&gt; Pervasive real-time support <span class="hljs-keyword">in</span> user-space (Enable)<br>    –&gt; Number of registry slots<br>    –&gt; 4096<br>    –&gt; Size of the system heap<br>    –&gt; 2048 Kb<br>    –&gt; Size of the private stack pool<br>    –&gt; 1024 Kb<br>    –&gt; Size of private semaphores heap<br>    –&gt; 48 Kb<br>    –&gt; Size of global semaphores heap<br>    –&gt; 48 Kb<br><br>Search <span class="hljs-keyword">for</span> INTEL_IDLE (<span class="hljs-built_in">disable</span>)<br>Search <span class="hljs-keyword">for</span> INPUT_PCSPKR (<span class="hljs-built_in">disable</span> PC speaker support)<br>Search <span class="hljs-keyword">for</span> XENO and <span class="hljs-built_in">enable</span> RTnet<br>Yes - Enable RTnet, TCP/IP socket interface<br>Yes - Search <span class="hljs-keyword">for</span> XENO and <span class="hljs-built_in">enable</span> User-space device driver framework<br></code></pre></div></td></tr></table></figure>
+<p>修改完主页中应该是没有警告消息了，<br>以此执行<br>sudo make -j4(-j4表示4线程编译，缺省表示单线程)<br>sudo make modules_install<br>sudo make install<br>中间会出现错误：<br>error “__ipipe_dispatch_irq”的一个recipe target “modules”failed的问题<br>在kernel/ipipe/core.c 1603行加上    EXPORT_SYMBOL(__ipipe_dispatch_irq);即可。</p>
+<h2 id="编译xenomai"><a href="#编译xenomai" class="headerlink" title="编译xenomai"></a>编译xenomai</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>进入xenomai源码目录 执行</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs jboss-cli"><span class="hljs-string">./configure</span> <span class="hljs-params">--with-pic</span> <span class="hljs-params">--with-core=cobalt</span> <span class="hljs-params">--enable-smp</span> <span class="hljs-params">--disable-tls</span> <span class="hljs-params">--enable-dlopen-libs</span> <span class="hljs-params">--disable-clock-monotonic-raw</span><br></code></pre></div></td></tr></table></figure>
+<p>执行</p>
+<figure class="highlight gauss"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs gauss">sudo <span class="hljs-built_in">make</span> <br>sudo <span class="hljs-built_in">make</span> install<br></code></pre></div></td></tr></table></figure>
+<p>完成安装；</p>
+<h2 id="编译ethercat"><a href="#编译ethercat" class="headerlink" title="编译ethercat"></a>编译ethercat</h2><p>重启换成编译好的双内核版本ubuntu<br><img src="/medias/914.2.jpg" srcset="/img/loading.gif" lazyload></p>
+<h3 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h3><p><a target="_blank" rel="noopener" href="https://www.etherlab.org/en/ethercat/index.php">https://www.etherlab.org/en/ethercat/index.php</a><br>请不要下载官网源码：）我记得没错的话是直接有configure配置文件的，而没有bootstrap脚本来生成configure文件，用自带的configure编译出现各种函数错误，解决一个又来一个。<br>建议拉github的这个仓库git clone <a target="_blank" rel="noopener" href="https://gitlab.com/etherlab.org/ethercat.git">https://gitlab.com/etherlab.org/ethercat.git</a></p>
+<p>根据配置如下<br>./configure –with-linux-dir=linux源码目录 （不写就算当前运行的内核，建议不写） –enable-generic=yes –enable-8139too=yes –enable-rtdm=yes  –with-xenomai-dir=/usr/xenomai<br>如果有其他需求，请参照官网配置表格。</p>
+<figure class="highlight gauss"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs gauss"><span class="hljs-built_in">make</span><br><span class="hljs-built_in">make</span> modules<br><span class="hljs-built_in">make</span> install<br>sudo <span class="hljs-built_in">make</span> modules_install<br></code></pre></div></td></tr></table></figure>
+<h3 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h3><p>官方文档说编译后文件是在/opt/目录下，但是在ubuntu上是在/usr/local/ect目录下<br>进入/usr/local目录下<br>执行</p>
+<figure class="highlight awk"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs awk">cp <span class="hljs-regexp">/etc/</span>sysconfig<span class="hljs-regexp">/ethercat  /</span>etc<span class="hljs-regexp">/sysconfig/</span><br></code></pre></div></td></tr></table></figure>
+<p>注意这里你的ubuntu可能在/etc下没有sysconfig，自己新建就好。<br>链接</p>
+<figure class="highlight awk"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs awk">sudo ln -s etc<span class="hljs-regexp">/inin.d/</span>ethercat <span class="hljs-regexp">/etc/i</span>nit.d/<br></code></pre></div></td></tr></table></figure>
+<p>修改/etc/sysconfig下的ethercat文件在master0_device=“”填入自己的mac地址，在DEVICE_MODULES=””填入generic。<br>保存<br>执行#sudo /etc/init.d/ethercat start 可以看到ethercat安装成功，执行ethercat salve 可以检测从站。<br><img src="/medias/914.1.png" srcset="/img/loading.gif" lazyload><br><img src="/medias/914.0.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="qt界面开发"><a href="#qt界面开发" class="headerlink" title="qt界面开发"></a>qt界面开发</h2><h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>库链接<br><img src="/medias/914.png" srcset="/img/loading.gif" lazyload><br>在qt开放时不能在qt上运行，一运行就显示permission denied,但是在shell中运行又显示找不到库<br>解决方法:<br>方法一：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs gradle">sudo gedit <span class="hljs-regexp">/etc/</span>ld.so.conf<br>#加入<span class="hljs-regexp">/usr/</span>local/lib<br>#更新<span class="hljs-regexp">/etc/</span>ld.so.cache文件<br>ldconfig<br></code></pre></div></td></tr></table></figure>
+<p>方法二：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs gradle">sudo gedit <span class="hljs-regexp">/etc/</span>ld.so.conf.d/usr-lib.conf<br>#加入<span class="hljs-regexp">/usr /</span>local/lib<br>#更新<span class="hljs-regexp">/ect/</span>ld.so.cache文件<br>ldconfig<br></code></pre></div></td></tr></table></figure>
+<p>再次运行成功！<br><img src="/medias/914.3.jpg" srcset="/img/loading.gif" lazyload></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%AE%9E%E9%AA%8C%E5%AE%A4/">实验室</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/09/19/%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%BE%93%E5%85%A5/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">重定位输入方法</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/25/go%E8%AF%BB%E5%8F%96%E6%96%87%E4%BB%B6%E7%9A%84%E6%96%B9%E5%BC%8F/">
+                        <span class="hidden-mobile">Golang读取文件的方法</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
