@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>epoll相关 | Chou</title><meta name="keywords" content="Leaning"><meta name="author" content="chou"><meta name="copyright" content="chou"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="三种IO多路复用select 缺点（1）每次调用select，都需要把fd集合从用户态拷贝到内核态，这个开销在fd很多时会很大（2）同时每次调用select都需要在内核遍历传递进来的所有fd，这个开销在fd很多时也很大（3）select使用是bit 数组了，支持的文件描述符数量太小了，默认是1024 优点(1) 跨平台。   poll除了数据结构不一样以外，基本和select一样。 epoll工">
+<meta property="og:type" content="article">
+<meta property="og:title" content="epoll相关">
+<meta property="og:url" content="http://example.com/2021/12/30/epoll%E7%9B%B8%E5%85%B3/index.html">
+<meta property="og:site_name" content="Chou">
+<meta property="og:description" content="三种IO多路复用select 缺点（1）每次调用select，都需要把fd集合从用户态拷贝到内核态，这个开销在fd很多时会很大（2）同时每次调用select都需要在内核遍历传递进来的所有fd，这个开销在fd很多时也很大（3）select使用是bit 数组了，支持的文件描述符数量太小了，默认是1024 优点(1) 跨平台。   poll除了数据结构不一样以外，基本和select一样。 epoll工">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/img/12.jpg">
+<meta property="article:published_time" content="2021-12-30T07:37:02.000Z">
+<meta property="article:modified_time" content="2022-03-01T06:17:24.957Z">
+<meta property="article:author" content="chou">
+<meta property="article:tag" content="Leaning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/12.jpg"><link rel="shortcut icon" href="/img/112.png"><link rel="canonical" href="http://example.com/2021/12/30/epoll%E7%9B%B8%E5%85%B3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'epoll相关',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2022-03-01 14:17:24'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/112.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">10</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">Tags</div><div class="length-num">5</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/img/12.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Chou</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">epoll相关</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2021-12-30T07:37:02.000Z" title="Created 2021-12-30 15:37:02">2021-12-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2022-03-01T06:17:24.957Z" title="Updated 2022-03-01 14:17:24">2022-03-01</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="epoll相关"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><span id="more"></span>
+<h3 id="三种IO多路复用"><a href="#三种IO多路复用" class="headerlink" title="三种IO多路复用"></a>三种IO多路复用</h3><h4 id="select"><a href="#select" class="headerlink" title="select"></a>select</h4><ul>
+<li>缺点<br>（1）每次调用select，都需要把fd集合从用户态拷贝到内核态，这个开销在fd很多时会很大<br>（2）同时每次调用select都需要在内核遍历传递进来的所有fd，这个开销在fd很多时也很大<br>（3）select使用是bit 数组了，支持的文件描述符数量太小了，默认是1024</li>
+<li>优点<br>(1) 跨平台。 </li>
+</ul>
+<h4 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h4><p>除了数据结构不一样以外，基本和select一样。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>工作流程：<br><pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">1. 用户进程调用epoll_create;
+2. 内核创建readyList,红黑树;
+3. 用户进程调用epoll_ctrl,传递监控的句柄(如Socket),以及在上面关注的事件;
+4. 内核将句柄插入红黑树;
+5. 内核的中断处理程序注册一个回调,如果红黑树中某个句柄的中断到了,
+把它对应的事件放到ReadyList. 
+
+--- 另一个流程 --- 
+1. 用户进程调用epoll_wait
+2. 内核从ReadyList返回可回调的事件.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><br>epoll事件有两种模型，边沿触发：edge_triggered(et),level_trggered(lt);</p>
+<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><ul>
+<li>1 为什么epoll要用红黑树，而不用哈希表之类的数据结构   </li>
+</ul>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token number">1</span> epoll要快速找到某一个句柄，候选实现：
+    <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> 查找树 <span class="token function">O</span><span class="token punctuation">(</span>lgn<span class="token punctuation">)</span>
+    <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> 哈希表 <span class="token function">O</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span> 跳表 近似<span class="token function">O</span><span class="token punctuation">(</span>lgn<span class="token punctuation">)</span>
+    而选红黑树不选用AVL树的原因：
+
+内核源码中说<span class="token punctuation">(</span>网上查到的自己没看<span class="token punctuation">)</span>
+    Red<span class="token operator">-</span>black trees are similar to AVL trees<span class="token punctuation">,</span> but provide faster real<span class="token operator">-</span>time boundedworst <span class="token keyword">case</span> performance <span class="token keyword">for</span> insertion and <span class="token function">deletion</span> <span class="token punctuation">(</span>at most two rotations andthree rotations<span class="token punctuation">,</span> respectively<span class="token punctuation">,</span> to balance the tree<span class="token punctuation">)</span><span class="token punctuation">,</span> with slightly <span class="token function">slower</span><span class="token punctuation">(</span>but still <span class="token function">O</span><span class="token punctuation">(</span>log n<span class="token punctuation">)</span><span class="token punctuation">)</span> lookup time<span class="token punctuation">.</span>  
+    红黑树类似于AVL树，但提供更快的实时性，插入和删除的有界最坏情况性能（最多两个分别旋转和三次旋转以平衡树）。查找时间稍慢（但仍为O（log n））。    
+
+<span class="token number">1.</span> 如果插入一个node引起了树的不平衡，AVL和RB<span class="token operator">-</span>Tree都是最多只需要<span class="token number">2</span>次旋转操作，即两者都是<span class="token function">O</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>   
+    但是在删除node引起树的不平衡时，最坏情况下，AVL需要维护从被删node到root这条路径上所有node的平衡性，  
+    因此需要旋转的量级<span class="token function">O</span><span class="token punctuation">(</span>logN<span class="token punctuation">)</span>，而RB<span class="token operator">-</span>Tree最多只需<span class="token number">3</span>次旋转，只需要<span class="token function">O</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>的复杂度。    
+<span class="token number">2.</span> 其次，AVL的结构相较RB<span class="token operator">-</span>Tree来说更为平衡，在插入和删除node更容易引起Tree的unbalance，  
+    因此在大量数据需要插入或者删除时，AVL需要rebalance的频率会更高。因此，RB<span class="token operator">-</span>Tree在需要大量插入和  
+    删除node的场景下，效率更高。自然，由于AVL高度平衡，因此AVL的search效率更高。    
+<span class="token number">3.</span> map的实现只是折衷了两者在search、insert以及delete下的效率。总体来说，RB<span class="token operator">-</span>tree的统计性能是高于AVL的。  
+
+<span class="token number">2</span> 选树的原因
+    <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> 频繁增删改查，哈希表需要预估空间大小，这个场景无法做到，
+        间接影响响应时间，哈希表有扩容策略的，扩容数据需要移动，即使使用了一致性哈希算法，也难以满足非阻塞timeout时间限制。
+    <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> 百万级别连接的时候，哈希表会变得很大，连接变少的时候就会浪费很大的内存。
+    <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span> 跳表，慢于红黑树，空间也高<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>2 epoll 就一定比select快吗？</li>
+</ul>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">select我们知道需要将select数组注册到内核中，内核需要轮询所有描述符检查其是否就绪，开销很大。  
+epoll模型虽然在用户空间也需要轮询所有返回的就绪描述符，这些描述符都是已经就绪的但并非其优势所在，原因在于只需要将感兴趣的文件描述符  
+与事件注册到epoll里面的红黑树中<span class="token punctuation">,</span>当事件触发的时候会调用其回调函数，回调函数负责把就绪的加入就绪链表，等用户调用epoll_wait。  
+
+但是epoll一定会比select快吗<span class="token operator">?</span>
+
+文件描述符放入一个链表中。当调用epoll_wait<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>3 epoll中就绪描述符很多人说是通过mmap共享内存实现的，真的吗？</li>
+</ul>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">据陈硕大佬和小林coding在知乎的说，其实压根没mmap共享内存！  
+epoll内核源码：
+ <span class="token keyword">if</span><span class="token punctuation">(</span>revents<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+     <span class="token comment">//将当前的事件和用户传入的数据都copy给用户空间，就是epoll_wait拷贝的过程</span>
+     <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">__put_user</span><span class="token punctuation">(</span>revents<span class="token punctuation">,</span><span class="token operator">&amp;</span>uevent<span class="token operator">-></span>event<span class="token punctuation">)</span> <span class="token operator">||</span>
+     <span class="token function">__put_user</span><span class="token punctuation">(</span>epi<span class="token operator">-></span>event<span class="token punctuation">.</span>data<span class="token punctuation">,</span><span class="token operator">&amp;</span>uevent<span class="token operator">-></span>data<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+         <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+     <span class="token punctuation">&#125;</span>
+     <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+ <span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>3 为什么epoll的et模式文件要设置成非阻塞</li>
+</ul>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">因为将任务分给线程执行的时候，最后一次读必会阻塞线程，写会阻塞吗？写也会阻塞，当发送的缓存区满了，send就会阻塞。  <span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li><p>tips: 关于read和write阻塞非阻塞的区别</p>
+</li>
+<li><p>read :<br>返回值：<br>  n &gt; 0 正常读到<br>  n == 0 套接字关闭，读到fin<br>  n &lt; 0</p>
+</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">errno &#x3D;&#x3D; EINTR 操作中断，可以继续读取  ；  
+errno &#x3D;&#x3D; EWOULDBLOCK 如果是非阻塞的，无数据会返回；  
+errno &#x3D;&#x3D; EAGAIN 表示过会再试 EAGAIN &#x3D;&#x3D; EWOULDBLOCK；  <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>所以ET模式下阻塞非阻塞的区别：<br>对于非阻塞来说，只要缓存区有数据，就会立即返回，而缓存区为空的时候非阻塞和阻塞会表现得不一样，阻塞模式会等待，非阻塞模式会立即返回-1，(errno == EAGAIN ||errno == EWOULDBLOCK)</p>
+<ul>
+<li><p>write<br>阻塞的write只有再缓存区放得下整个buff时才会返回，非阻塞write返回放得下的字节数并(errno == EAGAIN ||errno == EWOULDBLOCK),阻塞write正阻塞时，对面关闭了套接字也会立即返回，立刻将剩余缓存区填满，但下次调用会失败。  </p>
+</li>
+<li><p>4 epool模式下的oneshot</p>
+</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">oneshot主要是为了解决一个套接字被两个线程处理的情况，每次事件触发后，就从红黑树删除这个监听socket,
+由于ET需要循环读取所有数据，因此没太大问题，但是LT一般只读取一次，加上ONESHOT的话就再也读取不了后面的数据了，因此LT也需要循环读取直到EAGAIN<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">chou</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="http://example.com/2021/12/30/epoll%E7%9B%B8%E5%85%B3/">http://example.com/2021/12/30/epoll%E7%9B%B8%E5%85%B3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Leaning/">Leaning</a></div><div class="post_share"><div class="social-share" data-image="/img/12.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/12/30/%E8%BF%9B%E7%A8%8B%E5%90%8C%E6%AD%A5/"><img class="prev-cover" src="/img/55.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">进程间通信测试代码的简单实现</div></div></a></div><div class="next-post pull-right"><a href="/2021/12/30/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/"><img class="next-cover" src="/img/55.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">线程同步</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2021/12/30/%E8%BF%9B%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="进程间通信测试代码的简单实现"><img class="cover" src="/img/55.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-12-30</div><div class="title">进程间通信测试代码的简单实现</div></div></a></div><div><a href="/2021/12/30/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="线程同步"><img class="cover" src="/img/55.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-12-30</div><div class="title">线程同步</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/112.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">chou</div><div class="author-info__description"></div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">10</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">Tags</div><div class="length-num">5</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>Announcement</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E7%A7%8DIO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="toc-number">1.</span> <span class="toc-text">三种IO多路复用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#select"><span class="toc-number">1.1.</span> <span class="toc-text">select</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#poll"><span class="toc-number">1.2.</span> <span class="toc-text">poll</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#epoll"><span class="toc-number">1.3.</span> <span class="toc-text">epoll</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-number">1.4.</span> <span class="toc-text">问题</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/12/16/leetcode%E5%91%A8%E8%B5%9Band%E5%8F%8C%E5%91%A8%E8%B5%9B/" title="LC周赛&amp;&amp;双周赛记录"><img src="/img/55.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="LC周赛&amp;&amp;双周赛记录"/></a><div class="content"><a class="title" href="/2022/12/16/leetcode%E5%91%A8%E8%B5%9Band%E5%8F%8C%E5%91%A8%E8%B5%9B/" title="LC周赛&amp;&amp;双周赛记录">LC周赛&amp;&amp;双周赛记录</a><time datetime="2022-12-16T07:37:02.000Z" title="Created 2022-12-16 15:37:02">2022-12-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/12/30/%E8%BF%9B%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="进程间通信测试代码的简单实现"><img src="/img/55.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="进程间通信测试代码的简单实现"/></a><div class="content"><a class="title" href="/2021/12/30/%E8%BF%9B%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="进程间通信测试代码的简单实现">进程间通信测试代码的简单实现</a><time datetime="2021-12-30T07:37:02.000Z" title="Created 2021-12-30 15:37:02">2021-12-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/12/30/epoll%E7%9B%B8%E5%85%B3/" title="epoll相关"><img src="/img/12.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="epoll相关"/></a><div class="content"><a class="title" href="/2021/12/30/epoll%E7%9B%B8%E5%85%B3/" title="epoll相关">epoll相关</a><time datetime="2021-12-30T07:37:02.000Z" title="Created 2021-12-30 15:37:02">2021-12-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/12/30/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="线程同步"><img src="/img/55.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="线程同步"/></a><div class="content"><a class="title" href="/2021/12/30/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/" title="线程同步">线程同步</a><time datetime="2021-12-30T07:37:02.000Z" title="Created 2021-12-30 15:37:02">2021-12-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/11/26/TinyWebServer%E7%AC%94%E8%AE%B0/" title="TinyWebServer项目"><img src="/img/Tinyserver.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TinyWebServer项目"/></a><div class="content"><a class="title" href="/2021/11/26/TinyWebServer%E7%AC%94%E8%AE%B0/" title="TinyWebServer项目">TinyWebServer项目</a><time datetime="2021-11-26T07:37:02.000Z" title="Created 2021-11-26 15:37:02">2021-11-26</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2022 By chou</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back To Top"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
